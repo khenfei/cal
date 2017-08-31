@@ -9,6 +9,6 @@ import com.khenfei.cal.model.JSONStringEnable;
 
 public interface PDFGenerator {
 	PDFGenerator data(final List<JSONStringEnable> source);
-	boolean execute(OutputStream oStream) 
-			throws IOException, PDFGeneratorException;
+
+	boolean execute(OutputStream oStream) throws IOException, PDFGeneratorException;
 }

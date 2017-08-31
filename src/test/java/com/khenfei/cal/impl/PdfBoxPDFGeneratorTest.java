@@ -37,20 +37,17 @@ public class PdfBoxPDFGeneratorTest {
 		populateFontFile();
 		populateData();		
 	}
+
 	private static boolean populateFontFile() throws IOException {
-		try (InputStream iStream = PdfBoxPDFGeneratorTest.class
-				.getResourceAsStream("/font/gkai00mp.ttf");) {
+		try (InputStream iStream = PdfBoxPDFGeneratorTest.class.getResourceAsStream("/font/gkai00mp.ttf");) {
 			File tmp = testFolder.newFile("font.ttf.tmp");
-			Files.copy(
-				iStream
-				, Paths.get(tmp.getPath())
-				, StandardCopyOption.REPLACE_EXISTING);	
+			Files.copy(iStream, Paths.get(tmp.getPath()), StandardCopyOption.REPLACE_EXISTING);
 			fontFile = tmp;
 			return true;
 		}
 	}
-	private static boolean populateData() 
-		throws JsonParseException, JsonMappingException, IOException {
+
+	private static boolean populateData() throws JsonParseException, JsonMappingException, IOException {
 		
 		data = new ArrayList<>();
 		ObjectMapper objMapper = new ObjectMapper();
@@ -79,12 +76,14 @@ public class PdfBoxPDFGeneratorTest {
 	public void testData_GivenNullValue_ExpectNoException() {
 		new PdfBoxPDFGenerator(fontFile).data(null);
 	}
-	@Test( expected=MissingData.class )
+
+	@Test(expected = MissingData.class)
 	public void testExecute_skipCallingData_ExpectNoException() throws PDFGeneratorException, IOException {
 		File output = testFolder.newFile("output.pdf");
 		new PdfBoxPDFGenerator(fontFile).data(null).execute(new FileOutputStream(output));
 		output.delete();
 	}
+
 	@Test
 	public void testExecute_GivenValidValue_ExpectPdfCreation() throws PDFGeneratorException, IOException {
 		File output = testFolder.newFile("output.pdf");
@@ -92,6 +91,6 @@ public class PdfBoxPDFGeneratorTest {
 		new PdfBoxPDFGenerator(fontFile).data(data).execute(new FileOutputStream(output));
 		double finalSize = output.length();
 		Assert.assertTrue(finalSize != initialSize);
-		output.delete();		
+		output.delete();
 	}
 }
