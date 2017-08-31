@@ -40,7 +40,6 @@ public class ExcelSourceProcessor implements SourceProcessor {
 		entries = new ArrayList<>();
 		try (FileInputStream excelInputStream = new FileInputStream(excelFile);
 				XSSFWorkbook workbook = new XSSFWorkbook(excelInputStream)) {
-
 			Sheet datatypeSheet = workbook.getSheetAt(0);
 			for (int i = 1; i < datatypeSheet.getLastRowNum() + 1; i++) {
 				Row currentRow = datatypeSheet.getRow(i);
@@ -53,7 +52,6 @@ public class ExcelSourceProcessor implements SourceProcessor {
 				entries.add(new AncestorLabel.AncestorLabelBuilder(number).requestor(requestorName)
 						.ancestor(ancestorName).build());
 			}
-
 		} catch (UnsupportedFileFormatException e) {
 			throw new UnsupportedFileFormat(e);
 		}

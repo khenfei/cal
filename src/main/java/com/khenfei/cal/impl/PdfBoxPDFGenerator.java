@@ -37,17 +37,6 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 		return this;
 	}
 
-	private List<AncestorLabel> digest(List<JSONStringEnable> jsonObject)
-			throws JsonParseException, JsonMappingException, IOException {
-		final List<AncestorLabel> records = new ArrayList<>();
-		ObjectMapper objMapper = new ObjectMapper();
-		objMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
-		for (JSONStringEnable json : jsonObject) {
-			records.add(objMapper.readValue(json.toJSON(), AncestorLabel.class));
-		}
-		return records;
-	}
-
 	@Override
 	public boolean execute(OutputStream oStream) throws IOException, PDFGeneratorException {
 		if (this.source == null) {
@@ -65,6 +54,17 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 		doc.save(oStream);
 		doc.close();
 		return true;
+	}
+
+	private List<AncestorLabel> digest(List<JSONStringEnable> jsonObject)
+			throws JsonParseException, JsonMappingException, IOException {
+		final List<AncestorLabel> records = new ArrayList<>();
+		ObjectMapper objMapper = new ObjectMapper();
+		objMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+		for (JSONStringEnable json : jsonObject) {
+			records.add(objMapper.readValue(json.toJSON(), AncestorLabel.class));
+		}
+		return records;
 	}
 
 	private boolean renderPage(final PDDocument doc, List<AncestorLabel> records) throws IOException {
