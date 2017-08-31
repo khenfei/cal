@@ -28,97 +28,62 @@ public class App {
 	public static void main(String[] args) {
 		CommandLineParser parser = new DefaultParser();
 		Options options = new Options();
-		options.addOption( 
-			Option.builder("i")
-            .desc("Input file. Specify excel (xlsx) file path")
-            .hasArg()
-            .argName("file")
-            .required()
-            .optionalArg(false)
-            .build());
-		options.addOption( 
-				Option.builder("o")
-				.desc("Output file. Specify output file path")
-	            .hasArg()
-	            .argName("file")
-	            .required(false)
-	            .optionalArg(false)
-	            .build());
-		options.addOption( 
-			Option.builder("f")
-			.desc("Font file. Specify custom True Type Font (TTF) file path")
-            .hasArg()
-            .argName("file")
-            .required(false)
-            .optionalArg(false)
-            .build());
-		options.addOption( 
-				Option.builder("h")
-				.longOpt("help")
-				.desc("Print this help message")
-	            .hasArg(false)
-	            .required(false)
-	            .build());
-		
+		options.addOption(Option.builder("i").desc("Input file. Specify excel (xlsx) file path").hasArg()
+				.argName("file").required().optionalArg(false).build());
+		options.addOption(Option.builder("o").desc("Output file. Specify output file path").hasArg().argName("file")
+				.required(false).optionalArg(false).build());
+		options.addOption(Option.builder("f").desc("Font file. Specify custom True Type Font (TTF) file path").hasArg()
+				.argName("file").required(false).optionalArg(false).build());
+		options.addOption(Option.builder("h").longOpt("help").desc("Print this help message").hasArg(false)
+				.required(false).build());
+
 		HelpFormatter formatter = new HelpFormatter();
 		final String commandTemplate = "cal -i xlsxfile -o output.pdf [-f fontfile]";
 		try {
-			if(args.length < 1) {
-				formatter.printHelp( commandTemplate, options );
+			if (args.length < 1) {
+				formatter.printHelp(commandTemplate, options);
 				return;
 			}
-			CommandLine line = parser.parse( options, args );
-			if( line.hasOption( "help" ) ) {
-				formatter.printHelp( commandTemplate, options );
+			CommandLine line = parser.parse(options, args);
+			if (line.hasOption("help")) {
+				formatter.printHelp(commandTemplate, options);
 				return;
-		    }
+			}
 			File font = null;
-		    if( line.hasOption( "font" ) ) {
-		    	font = new File(line.getOptionValue( "font" ) );
-		    }
-		    final String src = line.getOptionValue( "src" );
-		    final String out = line.getOptionValue("output");
-		    if(new App(font).execute(src, out)) {
-		    	log.info("File is generated successfully.");
-		    }
+			if (line.hasOption("font")) {
+				font = new File(line.getOptionValue("font"));
+			}
+			final String src = line.getOptionValue("src");
+			final String out = line.getOptionValue("output");
+			if (new App(font).execute(src, out)) {
+				log.info("File is generated successfully.");
+			}
 		} catch (ParseException | IOException e) {
 			log.error(e.getMessage(), e);
 		}
 
 	}
-	
+
 	public App(File fontfile) {
 		this.fontFile = fontfile;
 	}
-	
-	public boolean execute(
-			final String inputFilename
-			, final String outputFilename) 
-				throws FileNotFoundException, IOException {
-		
+
+	public boolean execute(final String inputFilename, final String outputFilename)
+			throws FileNotFoundException, IOException {
+
 		if (StringUtils.isBlank(inputFilename)) {
-			throw new IllegalArgumentException(
-				"Blank inputFilename detected. "+
-				"inputFilename must not be blank.");
+			throw new IllegalArgumentException("Blank inputFilename detected. inputFilename must not be blank.");
 		}
 		String output = outputFilename;
 		if (StringUtils.isBlank(output)) {
-			log.warn(
-				"Missing output filename detected. "+
-				"Default output filename ({}) is used."
-				, DEFAULT_OUTPUT);
+			log.warn("Missing output filename detected. Default output filename ({}) is used.", DEFAULT_OUTPUT);
 			output = DEFAULT_OUTPUT;
 		}
 		if (fontFile == null) {
-			try (InputStream iStream 
-					= this.getClass()
-					.getResourceAsStream("/font/gkai00mp.ttf");) {
-				
+			try (InputStream iStream = this.getClass().getResourceAsStream("/font/gkai00mp.ttf");) {
+
 				File tmp = File.createTempFile("font.ttf", ".tmp");
-				Files.copy(
-					iStream
-					, Paths.get(tmp.getPath())
-					, StandardCopyOption.REPLACE_EXISTING);	
+				Files.copy(iStream, Paths.get(tmp.getPath()), StandardCopyOption.REPLACE_EXISTING);
 				fontFile = tmp;
 			}
 		}
@@ -127,11 +92,11 @@ public class App {
 		PDFGenerator pdfGenerator = pdfGenerator(fontFile);
 		return sProcessor.digest().print(pdfGenerator, output);
 	}
-	
+
 	private SourceProcessor sourceProcessor(final File inputFile) {
 		return new ExcelSourceProcessor(inputFile);
 	}
-	
+
 	private PDFGenerator pdfGenerator(final File fontFile) {
 		return new PdfBoxPDFGenerator(fontFile);
 	}
