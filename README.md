@@ -1,3 +1,3 @@
 # cal
 
-An simple tool to generate PDF for Chinese praying purpose.
+A simple tool which consumes a list of names in excel format, and prints them in PDF.
