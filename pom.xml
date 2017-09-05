@@ -4,7 +4,7 @@
 	<groupId>com.khenfei</groupId>
 	<artifactId>cal</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0-SNAPSHOT</version>
+	<version>1.0</version>
 
 	<dependencies>
 		<!-- JSON -->
@@ -66,12 +66,16 @@
 		<java.version>1.8</java.version>
 		<jacoco.version>0.7.9</jacoco.version>
 		<maven.compiler.plugin.version>3.6.2</maven.compiler.plugin.version>
+		<maven.dependency.plugin.version>3.0.1</maven.dependency.plugin.version>
+		<maven.jar.plugin.version>3.0.2</maven.jar.plugin.version>
+		<maven.assembly.plugin.version>3.1.0</maven.assembly.plugin.version>
 	</properties>
 
 	<build>
-		<testResources>
+	  <finalName>cal</finalName>
+	  <testResources>
 			<testResource>
-				<directory>${project.basedir}/src/test/resource</directory>
+				<directory>${project.basedir}/src/test/resources</directory>
 			</testResource>
 		</testResources>
 		<plugins>
@@ -80,11 +84,73 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>${maven.compiler.plugin.version}</version>
 				<configuration>
-					<skipMain>true</skipMain>
-					<skip>true</skip>
+					<skipMain>false</skipMain>
 					<source>${java.version}</source>
 					<target>${java.version}</target>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>${maven.dependency.plugin.version}</version>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>
+								${project.build.directory}/libs
+							</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>${maven.jar.plugin.version}</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<classpathPrefix>libs/</classpathPrefix> 
+							<mainClass>
+								com.khenfei.App
+							</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>${maven.assembly.plugin.version}</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+						  <finalName>cald</finalName>
+							<archive>
+								<manifest>
+								  <addClasspath>true</addClasspath>
+									<mainClass>
+										com.khenfei.App
+									</mainClass>
+								</manifest>
+							</archive>
+							<descriptorRefs>
+								<descriptorRef>jar-with-dependencies</descriptorRef>
+							</descriptorRefs>
+							<appendAssemblyId>false</appendAssemblyId>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.jacoco</groupId>
