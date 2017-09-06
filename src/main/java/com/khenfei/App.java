@@ -50,11 +50,11 @@ public class App {
 				return;
 			}
 			File font = null;
-			if (line.hasOption("font")) {
-				font = new File(line.getOptionValue("font"));
+			if (line.hasOption("f")) {
+				font = new File(line.getOptionValue("f"));
 			}
-			final String src = line.getOptionValue("src");
-			final String out = line.getOptionValue("output");
+			final String src = line.getOptionValue("i");
+			final String out = line.getOptionValue("o");
 			if (new App(font).execute(src, out)) {
 				log.info("File is generated successfully.");
 			}
@@ -80,6 +80,7 @@ public class App {
 			output = DEFAULT_OUTPUT;
 		}
 		if (fontFile == null) {
+			log.warn("Missing fontFile filename detected. Default fontFile filename ({}) is used.", "gkai00mp.ttf");
 			try (InputStream iStream = this.getClass().getResourceAsStream("/font/gkai00mp.ttf");) {
 
 				File tmp = File.createTempFile("font.ttf", ".tmp");
@@ -87,9 +88,14 @@ public class App {
 				fontFile = tmp;
 			}
 		}
+		try (InputStream iStream = this.getClass().getResourceAsStream("/image/plate.png");) {
+			File tmp = File.createTempFile("image.tmp", ".png");
+			Files.copy(iStream, Paths.get(tmp.getPath()), StandardCopyOption.REPLACE_EXISTING);
+			imageFile = tmp;
+		}
 		File inputFile = new File(inputFilename);
 		SourceProcessor sProcessor = sourceProcessor(inputFile);
-		PDFGenerator pdfGenerator = pdfGenerator(fontFile);
+		PDFGenerator pdfGenerator = pdfGenerator(fontFile, imageFile);
 		return sProcessor.digest().print(pdfGenerator, output);
 	}
 
@@ -97,11 +103,12 @@ public class App {
 		return new ExcelSourceProcessor(inputFile);
 	}
 
-	private PDFGenerator pdfGenerator(final File fontFile) {
-		return new PdfBoxPDFGenerator(fontFile);
+	private PDFGenerator pdfGenerator(final File fontFile, final File imageFile) {
+		return new PdfBoxPDFGenerator(fontFile, imageFile);
 	}
 
 	private File fontFile;
+	private File imageFile;
 	private final static String DEFAULT_OUTPUT = "output.pdf";
 	private static final Logger log = LoggerFactory.getLogger(App.class);
 }

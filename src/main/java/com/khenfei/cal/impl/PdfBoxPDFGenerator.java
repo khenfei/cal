@@ -11,6 +11,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,8 +28,9 @@ import com.khenfei.cal.model.JSONStringEnable;
 
 public class PdfBoxPDFGenerator implements PDFGenerator {
 
-	public PdfBoxPDFGenerator(File fontFile) {
+	public PdfBoxPDFGenerator(final File fontFile, final File imageFile) {
 		this.fontFile = fontFile;
+		this.imageFile = imageFile;
 	}
 
 	@Override
@@ -49,7 +51,7 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 			log.debug("Number of records: {}", records.size());
 		}
 		PDDocument doc = new PDDocument();
-		this.defaultFont = PDType0Font.load(doc, this.fontFile);
+		this.font = PDType0Font.load(doc, this.fontFile);
 		renderPage(doc, records);
 		doc.save(oStream);
 		doc.close();
@@ -71,16 +73,26 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 
 		PDPage page = null;
 		final float columnModifier = new Float(59.3);
+		final float maxColumnSize = columnModifier * new Float(4);
 		int column = 0;
 		for (int i = 0; i < records.size(); i++) {
 			column = i % 5;
 			if (column == 0) {
 				page = new PDPage(new PDRectangle(PAGE_WIDTH, PAGE_HEIGHT));
 				doc.addPage(page);
+				renderBackground(doc, page);
 			}
-			renderColumn(doc, page, records.get(i), point(column * columnModifier), point(0));
+			renderColumn(doc, page, records.get(i), point(maxColumnSize - (column * columnModifier)), point(0));
 		}
 		return true;
+	}
+	
+	private PdfBoxPDFGenerator renderBackground(final PDDocument doc, final PDPage page) throws IOException {
+		PDImageXObject pdImage = PDImageXObject.createFromFile(imageFile.getAbsolutePath(), doc);
+		PDPageContentStream contents = new PDPageContentStream(doc, page);
+		contents.drawImage(pdImage, 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
+		contents.close();
+		return this;
 	}
 
 	private float point(final double value) {
@@ -90,9 +102,9 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 	private PdfBoxPDFGenerator renderColumn(final PDDocument doc, final PDPage page, final AncestorLabel aLabel,
 			final float xAxis, final float yAxis) throws IOException {
 
-		renderField(doc, page, aLabel.requestor(), xAxis + point(3), yAxis, 30, VerticalAlignment.BOTTOM);
-		renderField(doc, page, aLabel.ancestor(), xAxis + point(23), yAxis, 50, VerticalAlignment.MIDDLE);
-		renderField(doc, page, aLabel.number(), xAxis + point(53), yAxis + point(0), 20, VerticalAlignment.BOTTOM);
+		renderField(doc, page, aLabel.requestor(), xAxis + point(4.5), yAxis, 15, VerticalAlignment.REQUESTOR);
+		renderField(doc, page, aLabel.ancestor(), xAxis + point(27), yAxis, 20, VerticalAlignment.ANCESTOR);
+		renderField(doc, page, aLabel.number(), xAxis + point(53), yAxis + point(0), 10, VerticalAlignment.SEQUENCE);
 		return this;
 	}
 
@@ -108,19 +120,18 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 			throws IOException {
 
 		final List<Character> characters = new ArrayList<>(text);
-		final PDType0Font font = defaultFont;
-		final float fontLeading = fontSize * new Float(1.2);
+		final PDType0Font font = this.font;
+		final float fontLeading = fontSize * new Float(1.1);
 		final float fontHeight = new Float(1) * fontLeading;
 		final float textHeightLength = fontHeight * characters.size();
 		final float height = height(textHeightLength, verticalAlignment);
-		final float vAlignModifier = verticalAlignment == VerticalAlignment.BOTTOM ? new Float(10) : 0;
 		try (PDPageContentStream stream = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND,
 				true)) {
 
 			stream.beginText();
 			stream.setFont(font, fontSize);
 			stream.setLeading(fontLeading);
-			stream.newLineAtOffset(xAxis, height + vAlignModifier);
+			stream.newLineAtOffset(xAxis, height);
 			for (Character c : characters) {
 				stream.newLine();
 				stream.showText(Character.toString(c));
@@ -133,17 +144,20 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 	private float height(final float textHeightLength, final VerticalAlignment verticalAlignment) {
 
 		switch (verticalAlignment) {
-		case MIDDLE:
-			return (textHeightLength + PAGE_HEIGHT) / 2;
-		case BOTTOM:
-			return textHeightLength + new Float(10);
+		case ANCESTOR:
+			return PAGE_HEIGHT - new Float(120);
+		case REQUESTOR:
+			return PAGE_HEIGHT - new Float(220);
+		case SEQUENCE:
+			return PAGE_HEIGHT - new Float(300);
 		default:
 			return new Float(0);
 		}
 	}
 
 	private File fontFile;
-	private PDType0Font defaultFont;
+	private File imageFile;
+	private PDType0Font font;
 	private List<JSONStringEnable> source;
 	private static final float POINTS_PER_INCH = 72;
 	private static final float POINTS_PER_MM = 1 / (10 * 2.54f) * POINTS_PER_INCH;
@@ -151,7 +165,7 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 	private static final float PAGE_WIDTH = 297 * POINTS_PER_MM;
 
 	private static enum VerticalAlignment {
-		TOP, MIDDLE, BOTTOM;
+		ANCESTOR, REQUESTOR, SEQUENCE;
 	}
 
 	private final Logger log = LoggerFactory.getLogger(PdfBoxPDFGenerator.class);
