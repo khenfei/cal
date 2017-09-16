@@ -43,12 +43,16 @@ public class ExcelSourceProcessor implements SourceProcessor {
 			Sheet datatypeSheet = workbook.getSheetAt(0);
 			for (int i = 1; i < datatypeSheet.getLastRowNum() + 1; i++) {
 				Row currentRow = datatypeSheet.getRow(i);
-				final String requestorName = new CellSanitizer(
-						currentRow.getCell(0, MissingCellPolicy.CREATE_NULL_AS_BLANK)).toString();
+				final int number = new CellSanitizer(currentRow.getCell(0, MissingCellPolicy.CREATE_NULL_AS_BLANK))
+						.toInteger();
 				final String ancestorName = new CellSanitizer(
 						currentRow.getCell(1, MissingCellPolicy.CREATE_NULL_AS_BLANK)).toString();
-				final int number = new CellSanitizer(currentRow.getCell(2, MissingCellPolicy.CREATE_NULL_AS_BLANK))
-						.toInteger();
+				final String requestorName = new CellSanitizer(
+						currentRow.getCell(2, MissingCellPolicy.CREATE_NULL_AS_BLANK)).toString();
+				
+				if(StringUtils.isBlank(requestorName) || StringUtils.isBlank(ancestorName)) {
+					continue;
+				}
 				entries.add(new AncestorLabel.AncestorLabelBuilder(number).requestor(requestorName)
 						.ancestor(ancestorName).build());
 			}

@@ -24,7 +24,7 @@ public class Field implements JSONStringEnable {
 
 	public void setValueWith(final String name) {
 		this.value = StringUtils.isBlank(name) ? Collections.emptyList()
-				: name.chars().mapToObj(i -> (char) i).collect(Collectors.toList());
+				: name.trim().chars().mapToObj(i -> (char) i).collect(Collectors.toList());
 	}
 
 	@Override

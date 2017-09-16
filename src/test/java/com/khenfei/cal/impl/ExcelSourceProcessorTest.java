@@ -52,7 +52,8 @@ public class ExcelSourceProcessorTest {
 					, { "赵云", "冤亲债主", 4.0 }
 					, { "关羽", "冤亲债主", "50" }
 					, { "白起", "冤亲债主", 600 }
-					, { "小白", "冤亲债主", "9999" } };
+					, { "小白", "冤亲债主", "9999" } 
+					, { "", "", -1} };
 	
 			int rowNum = 0;
 			for (Object[] datatype : datatypes) {
