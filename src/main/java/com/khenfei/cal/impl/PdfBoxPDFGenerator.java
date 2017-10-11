@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -104,7 +105,7 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 
 		renderField(doc, page, aLabel.requestor(), xAxis + point(4.5), yAxis, 15, VerticalAlignment.REQUESTOR);
 		renderField(doc, page, aLabel.ancestor(), xAxis + point(27), yAxis, 20, VerticalAlignment.ANCESTOR);
-		renderField(doc, page, aLabel.number(), xAxis + point(53), yAxis + point(0), 10, VerticalAlignment.SEQUENCE);
+		renderField(doc, page, aLabel.number(), xAxis + point(53), yAxis, 10, VerticalAlignment.SEQUENCE);
 		return this;
 	}
 
@@ -134,7 +135,14 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 			stream.newLineAtOffset(xAxis, height);
 			for (Character c : characters) {
 				stream.newLine();
-				stream.showText(Character.toString(c));
+				try {
+					stream.showText(Character.toString(c));
+				} catch(IllegalArgumentException iae) {
+					if(StringUtils.isNotEmpty(iae.getMessage()) && iae.getMessage().contains("No glyph for")) {
+						log.error("No glyph for this character '"+c.toString()+"'");
+					}
+					throw iae;
+				}
 			}
 			stream.endText();
 		}
