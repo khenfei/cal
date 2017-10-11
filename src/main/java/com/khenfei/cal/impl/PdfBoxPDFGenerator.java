@@ -141,7 +141,6 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 					if(StringUtils.isNotEmpty(iae.getMessage()) && iae.getMessage().contains("No glyph for")) {
 						log.error("No glyph for this character '"+c.toString()+"'");
 					}
-					throw iae;
 				}
 			}
 			stream.endText();
