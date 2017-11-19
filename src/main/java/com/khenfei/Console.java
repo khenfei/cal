@@ -30,6 +30,8 @@ public class Console {
 				.required(false).optionalArg(false).build());
 		options.addOption(Option.builder("f").desc("Font file. Specify custom True Type Font (TTF) file path").hasArg()
 				.argName("file").required(false).optionalArg(false).build());
+		options.addOption(Option.builder("p").desc("Properties file. Specify properties file path").hasArg().argName("file")
+				.required(false).optionalArg(false).build());
 		options.addOption(Option.builder("h").longOpt("help").desc("Print this help message").hasArg(false)
 				.required(false).build());
 
@@ -54,6 +56,10 @@ public class Console {
 			
 			if (line.hasOption("f")) {
 				execArgs.put("font", line.getOptionValue("f"));
+			}
+			
+			if (line.hasOption("p")) {
+				execArgs.put("props", line.getOptionValue("p"));
 			}
 			
 			if (executer.execute(execArgs)) {

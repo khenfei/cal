@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -29,9 +31,77 @@ import com.khenfei.cal.model.JSONStringEnable;
 
 public class PdfBoxPDFGenerator implements PDFGenerator {
 
-	public PdfBoxPDFGenerator(final File fontFile, final File imageFile) {
+	public PdfBoxPDFGenerator(final File fontFile, final File imageFile, final Properties properties) {
 		this.fontFile = fontFile;
 		this.imageFile = imageFile;
+		config(properties);
+	}
+	
+	private void config(final Properties properties) {
+		if (properties == null) {
+			if (log.isDebugEnabled()) {
+				log.debug("properties object is null.");
+			}
+			return;
+		}
+		final float DEFAULT_AXIS = new Float("0");
+		final String ancestorXAxisDelta = "ancestor.x.delta";
+		this.ancestorXAxisDelta = getFloat(ancestorXAxisDelta, properties.getProperty(ancestorXAxisDelta), DEFAULT_AXIS);
+		
+		final String requestorXAxisDelta = "requestor.x.delta";
+		this.requestorXAxisDelta = getFloat(requestorXAxisDelta, properties.getProperty(requestorXAxisDelta), DEFAULT_AXIS);
+		
+		final String sequenceXAxisDelta = "sequence.x.delta";
+		this.sequenceXAxisDelta = getFloat(sequenceXAxisDelta, properties.getProperty(sequenceXAxisDelta), DEFAULT_AXIS);
+		
+		final String ancestorYAxisDelta = "ancestor.y.delta";
+		this.ancestorYAxisDelta = getFloat(ancestorYAxisDelta, properties.getProperty(ancestorYAxisDelta), DEFAULT_AXIS);
+		
+		final String requestorYAxisDelta = "requestor.y.delta";
+		this.requestorYAxisDelta = getFloat(requestorYAxisDelta, properties.getProperty(requestorYAxisDelta), DEFAULT_AXIS);
+		
+		final String sequenceYAxisDelta = "sequence.y.delta";
+		this.sequenceYAxisDelta = getFloat(sequenceYAxisDelta, properties.getProperty(sequenceYAxisDelta), DEFAULT_AXIS);
+		
+		final String ancestorCharsThresholdXAxisDelta = "ancestor.chars.threshold.x.delta";
+		this.ancestorCharsThresholdXAxisDelta = 
+				getFloat(ancestorCharsThresholdXAxisDelta, 
+						properties.getProperty(ancestorCharsThresholdXAxisDelta), 
+						DEFAULT_AXIS);
+		
+		final String ancestorCharsSize = "ancestor.chars.size";
+		this.ancestorCharsSize = 
+				getInt(ancestorCharsSize, 
+						properties.getProperty(ancestorCharsSize), 
+						this.ancestorCharsSize);
+		
+		final String ancestorCharsThresholdSize = "ancestor.chars.threshold.size";
+		this.ancestorCharsThresholdSize = 
+				getInt(ancestorCharsThresholdSize, 
+						properties.getProperty(ancestorCharsThresholdSize), 
+						this.ancestorCharsThresholdSize);
+		
+		final String ancestorCharsThreshold = "ancestor.chars.threshold";
+		this.ancestorCharsThreshold = 
+				getInt(ancestorCharsThreshold, 
+						properties.getProperty(ancestorCharsThreshold), 
+						this.ancestorCharsThreshold);
+	}
+	
+	private float getFloat(final String key, final String value, final float defaultValue) {
+		if (NumberUtils.isCreatable(value)) {
+			return Float.parseFloat(value);			
+		} 
+		log.warn("Properties '{}' is not a valid numeric. Default value ({}) will be used.", key, defaultValue);
+		return defaultValue;		
+	}
+	
+	private int getInt(final String key, final String value, final int defaultValue) {
+		if (NumberUtils.isCreatable(value)) {
+			return Integer.parseInt(value);			
+		} 
+		log.warn("Properties '{}' is not a valid numeric. Default value ({}) will be used.", key, defaultValue);
+		return defaultValue;		
 	}
 
 	@Override
@@ -58,7 +128,7 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 		doc.close();
 		return true;
 	}
-
+	
 	private List<AncestorLabel> digest(List<JSONStringEnable> jsonObject)
 			throws JsonParseException, JsonMappingException, IOException {
 		final List<AncestorLabel> records = new ArrayList<>();
@@ -102,10 +172,18 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 
 	private PdfBoxPDFGenerator renderColumn(final PDDocument doc, final PDPage page, final AncestorLabel aLabel,
 			final float xAxis, final float yAxis) throws IOException {
-
-		renderField(doc, page, aLabel.requestor(), xAxis + point(4.5), yAxis, 15, VerticalAlignment.REQUESTOR);
-		renderField(doc, page, aLabel.ancestor(), xAxis + point(27), yAxis, 20, VerticalAlignment.ANCESTOR);
-		renderField(doc, page, aLabel.number(), xAxis + point(53), yAxis, 10, VerticalAlignment.SEQUENCE);
+		
+		final boolean isThresholdReached = aLabel.ancestor().value().size() > this.ancestorCharsThreshold; 
+		final float _ancestorXAxisDelta = isThresholdReached? this.ancestorCharsThresholdXAxisDelta : this.ancestorXAxisDelta;
+		final float ancestorSize = isThresholdReached? this.ancestorCharsThresholdSize : this.ancestorCharsSize;
+		
+		final float requestorXAxis = xAxis + point(4.5) + this.requestorXAxisDelta;
+		final float ancestorXAxis = xAxis + point(24) + _ancestorXAxisDelta;
+		final float sequenceXAxis = xAxis + point(53) + this.sequenceXAxisDelta;
+						
+		renderField(doc, page, aLabel.requestor(), requestorXAxis, yAxis, 15, VerticalAlignment.REQUESTOR);
+		renderField(doc, page, aLabel.ancestor(), ancestorXAxis, yAxis, ancestorSize, VerticalAlignment.ANCESTOR);
+		renderField(doc, page, aLabel.number(), sequenceXAxis, yAxis, 10, VerticalAlignment.SEQUENCE);
 		return this;
 	}
 
@@ -123,9 +201,7 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 		final List<Character> characters = new ArrayList<>(text);
 		final PDType0Font font = this.font;
 		final float fontLeading = fontSize * new Float(1.1);
-		final float fontHeight = new Float(1) * fontLeading;
-		final float textHeightLength = fontHeight * characters.size();
-		final float height = height(textHeightLength, verticalAlignment);
+		final float height = height(yAxis, verticalAlignment);
 		try (PDPageContentStream stream = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND,
 				true)) {
 
@@ -150,20 +226,30 @@ public class PdfBoxPDFGenerator implements PDFGenerator {
 		return this;
 	}
 
-	private float height(final float textHeightLength, final VerticalAlignment verticalAlignment) {
+	private float height(final float yAxis, final VerticalAlignment verticalAlignment) {
 
 		switch (verticalAlignment) {
 		case ANCESTOR:
-			return PAGE_HEIGHT - new Float(120);
+			return PAGE_HEIGHT - new Float(120) + yAxis + ancestorYAxisDelta;
 		case REQUESTOR:
-			return PAGE_HEIGHT - new Float(220);
+			return PAGE_HEIGHT - new Float(220) + yAxis + requestorYAxisDelta;
 		case SEQUENCE:
-			return PAGE_HEIGHT - new Float(300);
+			return PAGE_HEIGHT - new Float(300) + yAxis + sequenceYAxisDelta;
 		default:
-			return new Float(0);
+			return yAxis;
 		}
 	}
 
+	private float ancestorYAxisDelta = new Float(0);
+	private float requestorYAxisDelta = new Float(0);
+	private float sequenceYAxisDelta = new Float(0);
+	private float ancestorXAxisDelta = new Float(0);
+	private float requestorXAxisDelta = new Float(0);
+	private float sequenceXAxisDelta = new Float(0);
+	private float ancestorCharsThresholdXAxisDelta = new Float(0);
+	private int ancestorCharsThreshold = 5;
+	private int ancestorCharsSize = 30;
+	private int ancestorCharsThresholdSize = 20;
 	private File fontFile;
 	private File imageFile;
 	private PDType0Font font;

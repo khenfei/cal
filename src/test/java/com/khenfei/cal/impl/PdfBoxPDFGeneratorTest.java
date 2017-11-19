@@ -85,13 +85,13 @@ public class PdfBoxPDFGeneratorTest {
 	
 	@Test
 	public void testData_GivenNullValue_ExpectNoException() {
-		new PdfBoxPDFGenerator(fontFile, imageFile).data(null);
+		new PdfBoxPDFGenerator(fontFile, imageFile, null).data(null);
 	}
 
 	@Test(expected = MissingData.class)
 	public void testExecute_skipCallingData_ExpectNoException() throws PDFGeneratorException, IOException {
 		File output = testFolder.newFile("output.pdf");
-		new PdfBoxPDFGenerator(fontFile, imageFile).data(null).execute(new FileOutputStream(output));
+		new PdfBoxPDFGenerator(fontFile, imageFile, null).data(null).execute(new FileOutputStream(output));
 		output.delete();
 	}
 
@@ -99,7 +99,7 @@ public class PdfBoxPDFGeneratorTest {
 	public void testExecute_GivenValidValue_ExpectPdfCreation() throws PDFGeneratorException, IOException {
 		File output = testFolder.newFile("output.pdf");
 		double initialSize = output.length();
-		new PdfBoxPDFGenerator(fontFile, imageFile).data(data).execute(new FileOutputStream(output));
+		new PdfBoxPDFGenerator(fontFile, imageFile, null).data(data).execute(new FileOutputStream(output));
 		double finalSize = output.length();
 		Assert.assertTrue(finalSize != initialSize);
 		output.delete();

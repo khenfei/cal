@@ -1,6 +1,7 @@
 package com.khenfei.executer.impl;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -51,14 +53,24 @@ public class AppExecuter implements Executer {
 		} else {
 			fontFile = new File(font);
 		}
+		
 		try (InputStream iStream = this.getClass().getResourceAsStream("/image/plate.png");) {
 			File tmp = File.createTempFile("image.tmp", ".png");
 			Files.copy(iStream, Paths.get(tmp.getPath()), StandardCopyOption.REPLACE_EXISTING);
 			imageFile = tmp;
 		}
+		Properties properties = null;
+		final String props = args.get("props");
+		if (StringUtils.isNotBlank(props)) {
+			properties = new Properties();
+			try (FileInputStream iStream = new FileInputStream(props);) {
+				properties.load(iStream);
+			}
+		}
+		
 		File inputFile = new File(inputFilename);
 		SourceProcessor sProcessor = sourceProcessor(inputFile);
-		PDFGenerator pdfGenerator = pdfGenerator(fontFile, imageFile);
+		PDFGenerator pdfGenerator = pdfGenerator(fontFile, imageFile, properties);
 		return sProcessor.digest().print(pdfGenerator, output);
 	}
 	
@@ -66,8 +78,8 @@ public class AppExecuter implements Executer {
 		return new ExcelSourceProcessor(inputFile);
 	}
 
-	private PDFGenerator pdfGenerator(final File fontFile, final File imageFile) {
-		return new PdfBoxPDFGenerator(fontFile, imageFile);
+	private PDFGenerator pdfGenerator(final File fontFile, final File imageFile, final Properties properties) {
+		return new PdfBoxPDFGenerator(fontFile, imageFile, properties);
 	}
 	
 	private File fontFile;
