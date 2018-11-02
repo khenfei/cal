@@ -43,8 +43,8 @@ public class AppExecuter implements Executer {
 		
 		final String font = args.get("font");
 		if (StringUtils.isBlank(font)) {
-			log.warn("Missing fontFile filename detected. Default fontFile filename ({}) is used.", "gkai00mp.ttf");
-			try (InputStream iStream = this.getClass().getResourceAsStream("/font/gkai00mp.ttf");) {
+			log.warn("Missing fontFile filename detected. Default fontFile filename ({}) is used.", "dfkai_sb.ttf");
+			try (InputStream iStream = this.getClass().getResourceAsStream("/font/dfkai_sb.ttf");) {
 
 				File tmp = File.createTempFile("font.ttf", ".tmp");
 				Files.copy(iStream, Paths.get(tmp.getPath()), StandardCopyOption.REPLACE_EXISTING);
