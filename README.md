@@ -4,7 +4,7 @@ A simple jar which sole purpose is to consume a list of names in excel format, a
 
 Note: The name of the project is translated literally from chinese, 神主牌. Please forgive my laziness. :)
 
-## Depedencies
+## Dependencies
 
 This project has several library dependencies:
 - Apache PdfBox 2
